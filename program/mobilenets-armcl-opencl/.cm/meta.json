@@ -52,6 +52,11 @@
   ],
   "process_in_tmp": "yes",
   "program": "yes",
+  "use_preprocess_compilation_scripts" : {
+    "data_uoa": "mobilenets-armcl-opencl",
+    "script_name": "compile-preprocess",
+    "script_func": "ck_preprocess"
+  },  
   "run_cmds": {
     "default": {
       "ignore_return_code": "yes",
