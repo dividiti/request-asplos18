@@ -9,8 +9,13 @@
 #ifndef BENCHMARK_H
 #define BENCHMARK_H
 
+#if defined(ARMCL_18_05_PLUS)
+#include <arm_compute/graph.h>
+#include <arm_compute/graph/nodes/Nodes.h>
+#else
 #include <arm_compute/graph/Graph.h>
 #include <arm_compute/graph/Nodes.h>
+#endif    
 #include <arm_compute/runtime/CL/CLScheduler.h>
 #include <arm_compute/runtime/CPP/CPPScheduler.h>
 #include <arm_compute/runtime/Scheduler.h>
@@ -19,7 +24,6 @@
 #include <arm_compute/core/Helpers.h>
 #include <arm_compute/core/ITensor.h>
 
-#include "GraphTypePrinter.h"
 #include "GraphUtils.h"
 #include "Utils.h"
 
@@ -119,12 +123,37 @@ inline float get_multiplier() {
   return getenv_f("CK_ENV_MOBILENET_MULTIPLIER", 1);
 }
 
-inline ConvolutionMethodHint get_convolution_hint() {
-    bool bifrost_target = (arm_compute::CLScheduler::get().target() == arm_compute::GPUTarget::BIFROST);
-    ConvolutionMethodHint default_hint = (bifrost_target ? ConvolutionMethodHint::DIRECT : ConvolutionMethodHint::GEMM);
-    ConvolutionMethodHint hint = static_cast<ConvolutionMethodHint>(getenv_i("CK_CONVOLUTION_METHOD_HINT", static_cast<int>(default_hint)));
-    return hint;
+#if defined(ARMCL_18_05_PLUS)
+inline arm_compute::graph::ConvolutionMethod get_convolution_method() {
+  auto method_name = getenv("CK_CONVOLUTION_METHOD");
+  if (!method_name) {
+      bool bifrost_target = (arm_compute::CLScheduler::get().target() == arm_compute::GPUTarget::BIFROST);
+      return (bifrost_target ? arm_compute::graph::ConvolutionMethod::DIRECT : arm_compute::graph::ConvolutionMethod::GEMM);
+  }
+  // Try to get convolution method by its name
+  if (strcmp(method_name, "DEFAULT") == 0) return arm_compute::graph::ConvolutionMethod::DEFAULT;
+  if (strcmp(method_name, "GEMM") == 0) return arm_compute::graph::ConvolutionMethod::GEMM;
+  if (strcmp(method_name, "DIRECT") == 0) return arm_compute::graph::ConvolutionMethod::DIRECT;
+  if (strcmp(method_name, "WINOGRAD") == 0) return arm_compute::graph::ConvolutionMethod::WINOGRAD;
+  // Try to get convolution method as integer value.
+  // ConvolutionMethod enum has additional item comparing to ConvolutionMethodHint.
+  // So we shift int value here to be consistent with old version: 0 = GEMM, 1 = DIRECT
+  return static_cast<arm_compute::graph::ConvolutionMethod>(atoi(method_name)+1);
+} 
+#else
+inline ConvolutionMethodHint get_convolution_method() {
+  auto method_name = getenv("CK_CONVOLUTION_METHOD");
+  if (!method_name) {
+      bool bifrost_target = (arm_compute::CLScheduler::get().target() == arm_compute::GPUTarget::BIFROST);
+      return (bifrost_target ? ConvolutionMethodHint::DIRECT : ConvolutionMethodHint::GEMM);
+  }
+  // Try to get convolution method by its name
+  if (strcmp(method_name, "GEMM") == 0) return ConvolutionMethodHint::GEMM;
+  if (strcmp(method_name, "DIRECT") == 0) return ConvolutionMethodHint::DIRECT;
+  // Try to get convolution method as integer value.
+  return static_cast<ConvolutionMethodHint>(atoi(method_name));
 }
+#endif
 
 inline bool file_exists(const string& name) {
     ifstream f(name);
