@@ -76,9 +76,8 @@ private:
   float* _buffer;
 };
 
-
 std::string get_convolution_methods_file() {
-  auto filename = getenv("CK_CONVOLUTION_METHOD_FILE");
+  auto filename = getenv("RUN_OPT_CONVOLUTION_METHOD_FILE");
   return filename ? std::string(filename) : std::string("conv_methods.txt");
 }
 

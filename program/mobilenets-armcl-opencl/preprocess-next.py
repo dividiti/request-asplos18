@@ -17,7 +17,8 @@ def ck_preprocess(i):
   run_input_files = []
 
   WEIGHTS_DIR = dep_env('weights', 'CK_ENV_MOBILENET')
-  
+  CONV_METHOD_FILE = i['env'].get('CK_CONVOLUTION_METHOD_FILE', 'conv_methods.txt')
+
   if i['target_os_dict'].get('remote','') == 'yes':
     if i['env'].get('CK_PUSH_LIBS_TO_REMOTE', 'yes').lower() == 'yes':
       lib_dir = dep_env('library', 'CK_ENV_LIB_ARMCL')
@@ -33,12 +34,16 @@ def ck_preprocess(i):
           files_to_push_by_path[var_name] = os.path.join(WEIGHTS_DIR, file_name)
           file_index += 1
 
+    if os.path.isfile(CONV_METHOD_FILE):
+      run_input_files.append(os.path.join(os.getcwd(), CONV_METHOD_FILE))
+
     new_env['RUN_OPT_GRAPH_FILE'] = '.'
   else:
     new_env['RUN_OPT_GRAPH_FILE'] = WEIGHTS_DIR
 
   new_env['RUN_OPT_RESOLUTION'] = dep_env('weights', 'CK_ENV_MOBILENET_RESOLUTION')
   new_env['RUN_OPT_MULTIPLIER'] = dep_env('weights', 'CK_ENV_MOBILENET_MULTIPLIER')
+  new_env['RUN_OPT_CONVOLUTION_METHOD_FILE'] = CONV_METHOD_FILE
 
   print('--------------------------------\n')
   return {
