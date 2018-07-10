@@ -80,6 +80,7 @@
     "CK_IMAGE_FILE": "",
     "CK_RECREATE_CACHE": "NO", 
     "CK_SKIP_IMAGES": 0,
+    "CK_NORMALIZE_DATA": "YES",
     "CK_SUBTRACT_MEAN": "YES",
     "CK_TMP_IMAGE_SIZE": 0
   },

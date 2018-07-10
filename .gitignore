@@ -1,4 +1,4 @@
 *tmp/
 *.pyc
-program/mobilenets-armcl-opencl/batches*
-program/mobilenets-armcl-opencl/images*.txt
+program/mobilenets-armcl-opencl/preprocessed
+
