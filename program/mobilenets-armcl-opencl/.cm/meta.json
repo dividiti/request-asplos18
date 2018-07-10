@@ -86,6 +86,7 @@
   },
   "run_deps": {
     "weights": {
+      "force_target_as_host": "yes",
       "local": "yes",
       "name": "MobileNet weights (as NumPy arrays)",
       "sort": 10,
@@ -93,12 +94,14 @@
       "no_tags": "mobilenet-all"
     },
     "imagenet-aux": {
+      "force_target_as_host": "yes",
       "local": "yes",
       "name": "ImageNet dataset (aux)",
       "sort": 20,
       "tags": "dataset,imagenet,aux"
     },
     "imagenet-val": {
+      "force_target_as_host": "yes",
       "local": "yes",
       "name": "ImageNet dataset (val)",
       "sort": 30,

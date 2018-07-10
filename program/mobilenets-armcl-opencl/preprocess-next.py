@@ -16,16 +16,26 @@ def ck_preprocess(i):
   files_to_push_by_path = {}
   run_input_files = []
 
+  WEIGHTS_DIR = dep_env('weights', 'CK_ENV_MOBILENET')
+  
   if i['target_os_dict'].get('remote','') == 'yes':
-    LIB_DIR = dep_env('library', 'CK_ENV_LIB_ARMCL')
-    LIB_NAME = dep_env('library', 'CK_ENV_LIB_ARMCL_DYNAMIC_CORE_NAME')
+    if i['env'].get('CK_PUSH_LIBS_TO_REMOTE', 'yes').lower() == 'yes':
+      lib_dir = dep_env('library', 'CK_ENV_LIB_ARMCL')
+      lib_name = dep_env('library', 'CK_ENV_LIB_ARMCL_DYNAMIC_CORE_NAME')
+      files_to_push_by_path['CK_ENV_ARMCL_CORE_LIB_PATH'] = os.path.join(lib_dir, 'lib', lib_name)
+      run_input_files.append('$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$')
 
-    files_to_push_by_path['CK_ENV_ARMCL_CORE_LIB_PATH'] = os.path.join(LIB_DIR, 'lib', LIB_NAME)
-    run_input_files.append('$<<CK_ENV_LIB_STDCPP_DYNAMIC>>$')
+    if i['env'].get('CK_PUSH_WEIGHTS_TO_REMOTE', 'yes').lower() == 'yes':
+      file_index = 0
+      for file_name in os.listdir(WEIGHTS_DIR):
+        if file_name.endswith('.npy'):
+          var_name = 'CK_ENV_WEIGHTS_' + str(file_index)
+          files_to_push_by_path[var_name] = os.path.join(WEIGHTS_DIR, file_name)
+          file_index += 1
 
     new_env['RUN_OPT_GRAPH_FILE'] = '.'
   else:
-    new_env['RUN_OPT_GRAPH_FILE'] = dep_env('weights', 'CK_ENV_MOBILENET')
+    new_env['RUN_OPT_GRAPH_FILE'] = WEIGHTS_DIR
 
   new_env['RUN_OPT_RESOLUTION'] = dep_env('weights', 'CK_ENV_MOBILENET_RESOLUTION')
   new_env['RUN_OPT_MULTIPLIER'] = dep_env('weights', 'CK_ENV_MOBILENET_MULTIPLIER')
