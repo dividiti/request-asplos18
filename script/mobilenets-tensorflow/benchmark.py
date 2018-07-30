@@ -40,6 +40,32 @@ ch={
   'default':1
 }
 
+def select_program():
+    res = ck.access({'action':'search',
+                     'module_uoa':'program',
+                     'data_uoa':'image-classification-tf*'})
+    if res['return'] > 0:
+        return res
+    programs = res.get('lst',[])
+    if programs:
+        if len(programs) == 1:
+            return {'return': 0, 'program': programs[0]['data_uoa']}
+
+        ck.out('')
+        ck.out('More than one program is found suitable for this script:')
+        ck.out('')
+        res = ck.access({'action': 'select_uoa',
+                        'module_uoa': 'choice',
+                        'choices': programs})
+        if res['return'] > 0:
+            return res
+        for p in programs:
+            if p['data_uid'] == res['choice']:
+                return {'return': 0, 'program': p['data_uoa']}
+
+    return {'return': 1, 'error': 'No related programs found'}
+
+
 def do(i, arg):
     # Process arguments.
     if (arg.accuracy):
@@ -70,7 +96,13 @@ def do(i, arg):
     tosd=r['os_dict']
     tdid=r['device_id']
 
-    program='image-classification-tf-py'
+    # Select program `image-classification-tf*`
+    r = select_program()
+    if r['return'] > 0: return r
+    program = r['program']
+    # `program_id` is used to distinguish result repo records
+    program_id = program[len('image-classification-'):]
+
     ii={'action':'show',
         'module_uoa':'env',
         'tags':'dataset,imagenet,raw,val'}
@@ -109,7 +141,14 @@ def do(i, arg):
         cdeps[k]=rdeps[k]
         cdeps[k]['for_run_time']='yes'
 
-    depl=copy.deepcopy(cdeps['lib-tensorflow'])
+    if 'lib-tensorflow' in cdeps:
+        library_key = 'lib-tensorflow'
+    elif 'library' in cdeps:
+        library_key = 'library'
+    else:
+        return {'return':1, 'error':'no library dependency in program meta'}
+
+    depl=copy.deepcopy(cdeps[library_key])
     if (arg.tos is not None) and (arg.did is not None):
         tos=arg.tos
         tdid=arg.did
@@ -128,9 +167,9 @@ def do(i, arg):
     udepl=r['deps']['library'].get('choices',[]) # All UOAs of env for TensorFlow libs.
     if len(udepl)==0:
         return {'return':1, 'error':'no installed TensorFlow libs'}
-    cdeps['lib-tensorflow']['uoa']=udepl[0]
+    cdeps[library_key]['uoa']=udepl[0]
 
-    depm=copy.deepcopy(cdeps['model-and-weights'])
+    depm=copy.deepcopy(cdeps['weights'])
     ii={'action':'resolve',
         'module_uoa':'env',
         'host_os':hos,
@@ -146,8 +185,8 @@ def do(i, arg):
     if len(udepm)==0:
         return {'return':1, 'error':'no installed TensorFlow models'}
 
-    cdeps['lib-tensorflow']['uoa']=udepl[0]
-    cdeps['model-and-weights']['uoa']=udepm[0]
+    cdeps[library_key]['uoa']=udepl[0]
+    cdeps['weights']['uoa']=udepm[0]
 
     ii={'action':'pipeline',
         'prepare':'yes',
@@ -239,7 +278,7 @@ def do(i, arg):
             rho=int(r['dict']['env']['CK_ENV_TENSORFLOW_MODEL_MOBILENET_RESOLUTION'])
 
             record_repo='local'
-            record_uoa='mobilenets-'+experiment_type+'-'+str(rho)+'-'+str(alpha)+'-'+lib_tags
+            record_uoa='mobilenets-'+experiment_type+'-'+str(rho)+'-'+str(alpha)+'-'+lib_tags+'-'+program_id
 
             # Prepare pipeline.
             ck.out('---------------------------------------------------------------------------------------')
@@ -345,11 +384,12 @@ def do(i, arg):
                'out':'con'
             }
 
-            r=ck.access(ii)
-            if r['return']>0: return r
-            fail=r.get('fail','')
-            if fail=='yes':
-                return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
+            if not arg.dry_run:
+                r=ck.access(ii)
+                if r['return']>0: return r
+                fail=r.get('fail','')
+                if fail=='yes':
+                    return {'return':10, 'error':'pipeline failed ('+r.get('fail_reason','')+')'}
 
 ### end pipeline
     return {'return':0}
@@ -362,6 +402,7 @@ parser.add_argument("--accuracy", action="store_true", default=False, dest="accu
 parser.add_argument("--repetitions", action="store", default=10, dest="repetitions")
 parser.add_argument("--random_name", action="store_true", default=False, dest="random_name")
 parser.add_argument("--share_platform", action="store_true", default=False, dest="share_platform")
+parser.add_argument("--dry_run", action="store_true", default=False, dest="dry_run")
 
 myarg=parser.parse_args()
 
