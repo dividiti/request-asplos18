@@ -100,8 +100,8 @@ def do(i, arg):
     r = select_program()
     if r['return'] > 0: return r
     program = r['program']
-    # `program_id` is used to distinguish result repo records
-    program_id = program[len('image-classification-'):]
+    # `lib_type` is used to distinguish result repo records
+    lib_type = program[len('image-classification-'):]
 
     ii={'action':'show',
         'module_uoa':'env',
@@ -253,7 +253,7 @@ def do(i, arg):
         r=ck.access(ii)
         if r['return']>0: return r
         lib_name=r['data_name']
-        lib_tags='tensorflow-'+r['dict']['customize']['version']
+        lib_tags=lib_type+'-'+r['dict']['customize']['version']
 
         # Skip some libs with "in [..]" or "not in [..]".
         if lib_uoa in [ ]: continue
@@ -278,7 +278,7 @@ def do(i, arg):
             rho=int(r['dict']['env']['CK_ENV_TENSORFLOW_MODEL_MOBILENET_RESOLUTION'])
 
             record_repo='local'
-            record_uoa='mobilenets-'+experiment_type+'-'+str(rho)+'-'+str(alpha)+'-'+lib_tags+'-'+program_id
+            record_uoa='mobilenets-'+experiment_type+'-'+str(rho)+'-'+str(alpha)+'-'+lib_tags
 
             # Prepare pipeline.
             ck.out('---------------------------------------------------------------------------------------')
