@@ -120,6 +120,7 @@
   "source_files": [
     "benchmark.cpp",
     "mobilenet.cpp",
+    "autotune/tuner_convolution.cpp",
     "$<<CK_ENV_LIB_ARMCL_UTILS>>$/GraphUtils.cpp",
     "$<<CK_ENV_LIB_ARMCL_UTILS>>$/Utils.cpp"
   ],
