@@ -166,7 +166,11 @@ void setup_mobilenet(GraphObject& graph,
     graph << target_hint
           << get_convolution_method()
 #if defined(ARMCL_18_05_PLUS)
+#if defined(ARMCL_18_08_PLUS)
+          << DepthwiseConvolutionMethod::Optimized3x3
+#else // ArmCL 18.05
           << DepthwiseConvolutionMethod::OPTIMIZED_3x3
+#endif
           << InputLayer(TensorDescriptor(input_shape, DATATYPE),
                 arm_compute::support::cpp14::make_unique<CKInputAccessor>(input_data_buffer))
 #else
