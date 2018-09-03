@@ -181,7 +181,7 @@ void setup_mobilenet(GraphObject& graph,
           << InputLayer(TensorDescriptor(input_shape, DATATYPE),
                 arm_compute::support::cpp14::make_unique<CKInputAccessor>(input_data_buffer))
 #else
-          // Can't specifiy depthwise convolution method for ArmCL before 18.05 
+          // For ArmCL before 18.05, the optimized 3x3 depthwise convolution method is used by default.
           << arm_compute::graph::Tensor(TensorInfo(input_shape, 1, DATATYPE),
                 arm_compute::support::cpp14::make_unique<CKInputAccessor>(input_data_buffer))
 #endif
