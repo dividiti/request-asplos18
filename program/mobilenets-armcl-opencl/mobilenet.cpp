@@ -34,6 +34,17 @@ using namespace arm_compute::graph_utils;
 using namespace arm_compute::graph::frontend;
 #endif
 
+// TODO: this definition should be eliminated after merging PR https://github.com/ctuning/ck-math/pull/31
+// as it already contained there in `ck-math/program/armcl-classification-mobilenet/armcl_graph_common.h`
+#if defined(ARMCL_18_05_PLUS)
+  #ifndef DepthwiseConvolutionMethod_OPTIMIZED_3x3
+    #if defined(ARMCL_18_08_PLUS)
+      #define DepthwiseConvolutionMethod_OPTIMIZED_3x3 arm_compute::graph::DepthwiseConvolutionMethod::Optimized3x3
+    #else
+      #define DepthwiseConvolutionMethod_OPTIMIZED_3x3 arm_compute::graph::DepthwiseConvolutionMethod::OPTIMIZED_3x3
+    #endif
+  #endif
+#endif
 
 class CKInputAccessor : public ITensorAccessor {
 public:
@@ -166,14 +177,11 @@ void setup_mobilenet(GraphObject& graph,
     graph << target_hint
           << get_convolution_method()
 #if defined(ARMCL_18_05_PLUS)
-#if defined(ARMCL_18_08_PLUS)
-          << DepthwiseConvolutionMethod::Optimized3x3
-#else // ArmCL 18.05
-          << DepthwiseConvolutionMethod::OPTIMIZED_3x3
-#endif
+          << DepthwiseConvolutionMethod_OPTIMIZED_3x3
           << InputLayer(TensorDescriptor(input_shape, DATATYPE),
                 arm_compute::support::cpp14::make_unique<CKInputAccessor>(input_data_buffer))
 #else
+          // Can't specifiy depthwise convolution method for ArmCL before 18.05 
           << arm_compute::graph::Tensor(TensorInfo(input_shape, 1, DATATYPE),
                 arm_compute::support::cpp14::make_unique<CKInputAccessor>(input_data_buffer))
 #endif
