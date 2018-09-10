@@ -18,7 +18,8 @@ void setup_mobilenet(GraphObject& graph,
                      float multiplier,
                      const std::string& weights_dir,
                      const float *input_data_buffer,
-                     float *output_data_buffer);
+                     float *output_data_buffer,
+                     CKDataLayout data_layout);
 
 
 int main(int argc, const char **argv)
@@ -37,6 +38,8 @@ int main(int argc, const char **argv)
 
         int resolution = getenv_i("RUN_OPT_RESOLUTION");
         float multiplier = getenv_f("RUN_OPT_MULTIPLIER");
+        auto data_layout = getenv_s("RUN_OPT_DATA_LAYOUT") == "NHWC" ? LAYOUT_NHWC : LAYOUT_NCHW;
+        cout << "Data layout: " << (data_layout == LAYOUT_NCHW ? "NCHW" : "NHWC") << endl;
 
         vector<float> input(resolution * resolution * 3);
         vector<float> probes(1001);
@@ -49,7 +52,7 @@ int main(int argc, const char **argv)
         GRAPH(graph, "MobileNetV1");
         measure_setup([&]
         {
-            setup_mobilenet(graph, resolution, multiplier, settings.graph_file, input.data(), probes.data());
+            setup_mobilenet(graph, resolution, multiplier, settings.graph_file, input.data(), probes.data(), data_layout);
 
           // Do a warm up run for dynamic tuners (i.e. first tune here, then measure the best configuration later).
           if (tuner_type == CL_TUNER_DEFAULT) {

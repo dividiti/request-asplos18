@@ -44,6 +44,7 @@ def ck_preprocess(i):
   new_env['RUN_OPT_RESOLUTION'] = dep_env('weights', 'CK_ENV_MOBILENET_RESOLUTION')
   new_env['RUN_OPT_MULTIPLIER'] = dep_env('weights', 'CK_ENV_MOBILENET_MULTIPLIER')
   new_env['RUN_OPT_CONVOLUTION_METHOD_FILE'] = CONV_METHOD_FILE
+  new_env['RUN_OPT_DATA_LAYOUT'] = i['env'].get('CK_DATA_LAYOUT', 'NCHW')
 
   print('--------------------------------\n')
   return {
